@@ -1,3 +1,4 @@
+
 import pygame
 import random
 """
@@ -8,7 +9,7 @@ represented in order by 0 - 6
 
 pygame.font.init()
 
-# GLOBALS VARS
+# VARIABLES GLOBALES
 s_ancho = 800
 s_altura = 700
 bloque_ancho = 300  # meaning 300 // 10 = 30 width per block
@@ -19,7 +20,7 @@ superior_izquierda_x = (s_ancho - bloque_ancho) // 2
 superior_izquierda_y = s_altura - bloque_altura
 
 
-# SHAPE FORMATS
+# FORMATO DE FIGURAS
 
 S = [['.....',
       '.....',
@@ -398,4 +399,3 @@ def player(x, y):
 
 pygame.display.set_caption('Tetris')
 main_menu()  # start game
- 
