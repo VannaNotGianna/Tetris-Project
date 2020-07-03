@@ -1,3 +1,4 @@
+
 import pygame
 import random
 
@@ -19,7 +20,6 @@ tamano_bloque = 30
 superior_izquierda_x = (s_ancho - bloque_ancho) // 2
 superior_izquierda_y = s_altura - bloque_altura
 
-#FORMAS DE ANDREA
 S = [['.....',
       '.....',
       '..00.',
@@ -232,7 +232,7 @@ def dibujar_siguiente_figura(figura, superficie):
 
 def draw_venatana(superficie):
     superficie.fill((0,0,0))
-    # Tetris Title
+    # Tetris Titulo
     font = pygame.font.SysFont('comicsans', 60)
     label = font.render('TETRIS', 1, (255,255,255))
 
@@ -255,30 +255,30 @@ def main():
     rejilla = crear_rejilla(cerrado_posiciones)
 
     cambiar_pieza = False
-    run = True
+    correr = True
     pieza_ahora = obtener_figura()
     pieza_siguiente = obtener_figura()
     clock = pygame.time.Clock()
     fall_time = 0
 
-    while run:
+    while correr:
         rapidez = 0.27
 
         rejilla = crear_rejilla(cerrado_posiciones)
         rapidez += clock.get_rawtime()
         clock.tick()
 
-        # PIECE FALLING CODE
+        # PIEZA CAE
         if fall_time/1000 >= rapidez:
             fall_time = 0
             pieza_ahora.y += 1
             if not (espacio_valido(pieza_ahora, rejilla)) and pieza_ahora.y > 0:
                 pieza_ahora.y -= 1
-                change_piece = True
+                cambiar_pieza= True
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                correr = False
                 pygame.display.quit()
                 quit()
 
@@ -293,67 +293,66 @@ def main():
                     if not espacio_valido(pieza_ahora, rejilla):
                         pieza_ahora.x -= 1
                 elif event.key == pygame.K_UP:
-                    # rotate shape
+                    # rotar pieza
                     pieza_ahora.rotation = pieza_ahora.rotation + 1 % len(pieza_ahora.shape)
                     if not espacio_valido(pieza_ahora, rejilla):
                         pieza_ahora.rotation = pieza_ahora.rotation - 1 % len(pieza_ahora.shape)
 
                 if event.key == pygame.K_DOWN:
-                    # move shape down
+                    # mover la pieza abajo
                     pieza_ahora.y += 1
                     if not espacio_valido(pieza_ahora, rejilla):
                         pieza_ahora.y -= 1
 
-#HATA ACA
-        shape_pos = convert_shape_format(pieza_ahora)
+        posicion_figura = convertir_figura_formato(pieza_ahora)
 
-        # add piece to the grid for drawing
-        for i in range(len(shape_pos)):
-            x, y = shape_pos[i]
+        # añadir una pieza a la rejilla p
+        for i in range(len(posicion_figura)):
+            x, y = posicion_figura[i]
             if y > -1:
                 rejilla[y][x] = pieza_ahora.color
 
-        # IF PIECE HIT GROUND
+        # SI LA PIEZA TOCA EL SUELO
         if cambiar_pieza:
-            for pos in shape_pos:
+            for pos in posicion_figura:
                 p = (pos[0], pos[1])
-                locked_positions[p] = current_piece.color
-            current_piece = next_piece
-            next_piece = get_shape()
-            change_piece = False
+                cerrado_posiciones[p] = pieza_ahora.color
+            pieza_ahora = pieza_siguiente
+            pieza_siguiente = obtener_figura()
+            cambiar_pieza= False
 
-            # call four times to check for multiple clear rows
-            clear_rows(grid, locked_positions)
+            # CHEQUEAR PARA VER FILAS DISPONIBLES
+            despejar_filas(rejilla, cerrado_posiciones)
 
-        draw_window(win)
-        draw_next_shape(next_piece, win)
+        draw_venatana(ganar) 
+        dibujar_siguiente_figura(pieza_siguiente, ganar)
         pygame.display.update()
 
-        # Check if user lost
-        if check_lost(locked_positions):
-            run = False
+        # Chequear si perdiste
+        if check_lost(cerrado_posiciones): 
+            correr= False
 
-    draw_text_middle("You Lost", 40, (255,255,255), win)
+    dibujar_texto_almedio("Perdiste", 40, (255,255,255), ganar)
     pygame.display.update()
     pygame.time.delay(2000)
 
 
 def main_menu():
-    run = True
-    while run:
-        win.fill((0,0,0))
-        draw_text_middle(\'Press any key to begin.\', 60, (255, 255, 255), win)
+    correr = True
+    while correr:
+        ganar.fill((0,0,0))
+        dibujar_texto_almedio()\'Presiona cualquier pieza para comenzar.\', 60, (255, 255, 255), ganar)
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                correr = False
 
             if event.type == pygame.KEYDOWN:
                 main()
     pygame.quit()
 
 
-win = pygame.display.set_mode((s_width, s_height))
+ganar = pygame.display.set_mode((s_ancho, s_altura)) 
 pygame.display.set_caption(\'Tetris\')
 
 main_menu()  # start game
