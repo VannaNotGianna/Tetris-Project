@@ -213,7 +213,6 @@ def dibujar_rejilla(superficie, fila, col):
 
 
 def despejar_filas(rejilla, locked):
-    # need to see if fila is clear the shift every other fila above down one
 
     inc = 0
     for i in range(len(rejilla)-1, -1, -1):
