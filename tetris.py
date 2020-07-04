@@ -139,7 +139,7 @@ def obtenerPieza(column, fila, figura):
 
 
 def crear_rejilla(cerrar_posiciones={}):
-    rejilla = [[(0, 0, 0) for x in range(10)] for x in range(20)]
+    rejilla = [[(74, 112, 139) for x in range(10)] for x in range(20)]
 
     for i in range(len(rejilla)):
         for j in range(len(rejilla[i])):
@@ -167,7 +167,7 @@ def convierte_formato_figura(figura):
 
 def espacio_valido(figura, rejilla):
     posiciones_aceptadas = [[(j, i) for j in range(
-        10) if rejilla[i][j] == (0, 0, 0)] for i in range(20)]
+        10) if rejilla[i][j] == (74, 112, 139)] for i in range(20)]
     posiciones_aceptadas = [j for sub in posiciones_aceptadas for j in sub]
     formateado = convierte_formato_figura(figura)
 
@@ -217,7 +217,7 @@ def despejar_filas(rejilla, locked):
     inc = 0
     for i in range(len(rejilla)-1, -1, -1):
         fila = rejilla[i]
-        if (0, 0, 0) not in fila:
+        if (74, 112, 139) not in fila:
             inc += 1
             # add positions to remove from locked
             ind = i
@@ -253,7 +253,7 @@ def siguiente_figura(figura, superficie):
 
 
 def dibujar_ventana(superficie):
-    superficie.fill((0, 0, 0))
+    superficie.fill((74, 112, 139))
     # Tetris Title
     font = pygame.font.SysFont('Raleway', 60)
     label = font.render('TETRIS', 1, (255, 255, 255))
@@ -268,8 +268,8 @@ def dibujar_ventana(superficie):
 
     # draw rejilla and border
     dibujar_rejilla(superficie, 20, 10)
-    pygame.draw.rect(superficie, (255, 0, 0), (superior_izquierda_x,
-                                               superior_izquierda_y, bloque_ancho, bloque_altura), 5)
+    pygame.draw.rect(superficie, (108, 123, 139), (superior_izquierda_x,
+                                                   superior_izquierda_y, bloque_ancho, bloque_altura), 5)
     # pygame.display.update()
 
 
@@ -370,12 +370,16 @@ def main():
     pygame.time.delay(2000)
 
 
+click = False
+
+
 def main_menu():
     run = True
     while run:
-        pantalla.fill((0, 0, 0))
+        pantalla.fill((74, 112, 139))
         player(playerX, playerY)
         dibuja_texto_medio('Lets play TetriX', 60, (255, 255, 255), pantalla)
+
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
