@@ -1,6 +1,6 @@
-
 import pygame
 import random
+from mimodulo import *
 """
 10 x 20 square rejilla
 bloques: S, Z, I, O, J, L, T
@@ -125,58 +125,38 @@ T = [['.....',
       '.....']]
 
 bloques = [S, Z, I, O, J, L, T]
-lista_color = [(0, 255, 0), (255, 0, 0), (0, 255, 255),
-               (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
+
 # index 0 - 6 represent shape
+arch = open("colores.txt", "r")
+dicc = {}
+lista_codes = []
+lista_nombres = []
 
 
-def obtenerPieza(column, fila, figura):
+def obtenerDicc_colores(arch):
+    for linea in arch:
+        color, codigo = linea.split(" ")
+        codigo = codigo.strip('\n')
+        codigo = codigo.split(",")
+        dicc[color] = codigo
+    # print(dicc)
+    for codes in list(dicc.values()):
+        codes = [int(x) for x in codes]
+        lista_codes.append(tuple(codes))
+    # print(lista_codes)
+    for nombres in list(dicc.keys()):
+        lista_nombres.append(nombres)
+    # print(lista_nombres)
+    return lista_codes
+
+
+def obtenerPieza(column, fila, figura, arch):
     x = column
     y = fila
+    lista_color = obtenerDicc_colores(arch)
     color = lista_color[bloques.index(figura)]
     rotation = 0
     return [x, y, figura, color, rotation]
-
-
-def crear_rejilla(cerrar_posiciones={}):
-    rejilla = [[(74, 112, 139) for x in range(10)] for x in range(20)]
-
-    for i in range(len(rejilla)):
-        for j in range(len(rejilla[i])):
-            if (j, i) in cerrar_posiciones:
-                c = cerrar_posiciones[(j, i)]
-                rejilla[i][j] = c
-    return rejilla
-
-
-def convierte_formato_figura(figura):
-    posiciones = []
-    format = figura[2][figura[4] % len(figura[2])]
-
-    for i, linea in enumerate(format):
-        fila = list(linea)
-        for j, column in enumerate(fila):
-            if column == '0':
-                posiciones.append((figura[0] + j, figura[1] + i))
-
-    for i, pos in enumerate(posiciones):
-        posiciones[i] = (pos[0] - 2, pos[1] - 4)
-
-    return posiciones
-
-
-def espacio_valido(figura, rejilla):
-    posiciones_aceptadas = [[(j, i) for j in range(
-        10) if rejilla[i][j] == (74, 112, 139)] for i in range(20)]
-    posiciones_aceptadas = [j for sub in posiciones_aceptadas for j in sub]
-    formateado = convierte_formato_figura(figura)
-
-    for pos in formateado:
-        if pos not in posiciones_aceptadas:
-            if pos[1] > -1:
-                return False
-
-    return True
 
 
 def verifica_pierde(posiciones):
@@ -188,12 +168,12 @@ def verifica_pierde(posiciones):
 
 
 def obtener_bloque():
-    global bloques, lista_color
+    global bloques
 
-    return obtenerPieza(5, 0, random.choice(bloques))
+    return obtenerPieza(5, 0, random.choice(bloques), arch)
 
 
-def dibuja_texto_medio(text, size, color, superficie):
+def dibuja_texto_medio(superficie, text, size, color):
     font = pygame.font.SysFont('Raleway', size, bold=True)
     label = font.render(text, 1, color)
 
@@ -201,37 +181,15 @@ def dibuja_texto_medio(text, size, color, superficie):
                             superior_izquierda_y + bloque_altura/2 - label.get_height()/2))
 
 
-def dibujar_rejilla(superficie, fila, col):
+def dibujar_rejilla(superficie, rejilla):
     sx = superior_izquierda_x
     sy = superior_izquierda_y
-    for i in range(fila):
+    for i in range(len(rejilla)):
         pygame.draw.line(superficie, (128, 128, 128), (sx, sy + i*30),
                          (sx + bloque_ancho, sy + i * 30))  # horizontal lines
-        for j in range(col):
+        for j in range(len(rejilla[i])):
             pygame.draw.line(superficie, (128, 128, 128), (sx + j * 30, sy),
                              (sx + j * 30, sy + bloque_altura))  # vertical lines
-
-
-def despejar_filas(rejilla, locked):
-
-    inc = 0
-    for i in range(len(rejilla)-1, -1, -1):
-        fila = rejilla[i]
-        if (74, 112, 139) not in fila:
-            inc += 1
-            # add positions to remove from locked
-            ind = i
-            for j in range(len(fila)):
-                try:
-                    del locked[(j, i)]
-                except:
-                    continue
-    if inc > 0:
-        for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
-            x, y = key
-            if y < ind:
-                newKey = (x, y + inc)
-                locked[newKey] = locked.pop(key)
 
 
 def siguiente_figura(figura, superficie):
@@ -252,30 +210,70 @@ def siguiente_figura(figura, superficie):
     superficie.blit(label, (sx + 10, sy - 30))
 
 
-def dibujar_ventana(superficie):
+def update_score(nscore):
+    score = max_score()
+    arch = open("max_score.txt", "w")
+    if int(score) > nscore:
+        arch.write(str(score))
+    else:
+        arch.write(str(nscore))
+    arch.close()
+
+
+def max_score():
+    with open('max_score.txt', 'r') as f:
+        lines = f.readlines()
+        score = lines[0].strip()
+
+    return score
+
+
+def dibujar_ventana(superficie, rejilla, score=0, last_score=0):
     superficie.fill((74, 112, 139))
+    pygame.font.init()
     # Tetris Title
     font = pygame.font.SysFont('Raleway', 60)
-    label = font.render('TETRIS', 1, (255, 255, 255))
+    label = font.render('TETRIX', 1, (255, 255, 255))
 
     superficie.blit(label, (superior_izquierda_x + bloque_ancho /
                             2 - (label.get_width() / 2), 30))
+    # current score
+    font = pygame.font.SysFont('comicsans', 30)
+    label = font.render('Score: ' + str(score), 1, (255, 255, 255))
+    sx = superior_izquierda_x + bloque_ancho + 50
+    sy = superior_izquierda_y + bloque_altura/2 - 100
 
+    superficie.blit(label, (sx + 20, sy + 160))
+    # last score
+    label = font.render('High Score: ' + last_score, 1, (255, 255, 255))
+
+    sx = superior_izquierda_x - 200
+    sy = superior_izquierda_y + 200
+
+    superficie.blit(label, (sx + 20, sy + 160))
     for i in range(len(rejilla)):
         for j in range(len(rejilla[i])):
             pygame.draw.rect(
                 superficie, rejilla[i][j], (superior_izquierda_x + j * 30, superior_izquierda_y + i * 30, 30, 30), 0)
 
     # draw rejilla and border
-    dibujar_rejilla(superficie, 20, 10)
+    dibujar_rejilla(superficie, rejilla)
     pygame.draw.rect(superficie, (108, 123, 139), (superior_izquierda_x,
                                                    superior_izquierda_y, bloque_ancho, bloque_altura), 5)
+
     # pygame.display.update()
+lista_score = []
 
 
-def main():
-    global rejilla
+def store_score(score):
+    lista_score.append(score)
+    with open('total_scores.txt', 'w') as f:
+        for elem in range(len(lista_score)):
+            f.write(str(lista_score[elem])+'\n')
 
+
+def main(pantalla):
+    last_score = max_score()
     cerrar_posiciones = {}  # (x,y):(255,0,0)
     rejilla = crear_rejilla(cerrar_posiciones)
 
@@ -285,14 +283,18 @@ def main():
     pieza_siguiente = obtener_bloque()
     clock = pygame.time.Clock()
     fall_time = 0
-
+    rapidez = 0.27
+    level_time = 0
+    score = 0
     while run:
-        rapidez = 0.27
-
         rejilla = crear_rejilla(cerrar_posiciones)
         fall_time += clock.get_rawtime()
+        level_time += clock.get_rawtime()
         clock.tick()
-
+        if level_time/1000 > 5:
+            level_time = 0
+            if level_time > 0.12:
+                level_time -= 0.005
         # PIECE FALLING CODE
         if fall_time/1000 >= rapidez:
             fall_time = 0
@@ -305,38 +307,24 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.display.quit()
-                quit()
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     pieza_actual[0] -= 1
                     if not espacio_valido(pieza_actual, rejilla):
                         pieza_actual[0] += 1
-
-                elif event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT:
                     pieza_actual[0] += 1
                     if not espacio_valido(pieza_actual, rejilla):
                         pieza_actual[0] -= 1
-                elif event.key == pygame.K_UP:
-                    # rotate shape
-                    pieza_actual[4] = pieza_actual[4] + \
-                        1 % len(pieza_actual[2])
-                    if not espacio_valido(pieza_actual, rejilla):
-                        pieza_actual[4] = pieza_actual[4] - \
-                            1 % len(pieza_actual[2])
-
                 if event.key == pygame.K_DOWN:
-                    # move shape down
                     pieza_actual[1] += 1
                     if not espacio_valido(pieza_actual, rejilla):
                         pieza_actual[1] -= 1
-
-                if event.key == pygame.K_SPACE:
-                    while espacio_valido(pieza_actual, rejilla):
-                        pieza_actual[1] += 1
-                    pieza_actual[1] -= 1
-                    print(convierte_formato_figura(pieza_actual))  # todo fix
-
+                if event.key == pygame.K_UP:
+                    pieza_actual[4] += 1
+                    if not espacio_valido(pieza_actual, rejilla):
+                        pieza_actual[4] -= 1
         shape_pos = convierte_formato_figura(pieza_actual)
 
         # add piece to the rejilla for drapantallag
@@ -353,32 +341,29 @@ def main():
             pieza_actual = pieza_siguiente
             pieza_siguiente = obtener_bloque()
             cambiar_pieza = False
+            score += despejar_filas(rejilla, cerrar_posiciones)*10
 
-            # call four times to check for multiple clear filas
-            despejar_filas(rejilla, cerrar_posiciones)
-
-        dibujar_ventana(pantalla)
+        dibujar_ventana(pantalla, rejilla, score, last_score)
         siguiente_figura(pieza_siguiente, pantalla)
         pygame.display.update()
 
         # Check if user lost
         if verifica_pierde(cerrar_posiciones):
+            dibuja_texto_medio(pantalla, "Game Over", 40,
+                               (255, 255, 255))
+            pygame.display.update()
+            pygame.time.delay(1500)
             run = False
-
-    dibuja_texto_medio("You Lost", 40, (255, 255, 255), pantalla)
-    pygame.display.update()
-    pygame.time.delay(2000)
+            update_score(score)
+            store_score(score)
 
 
-click = False
-
-
-def main_menu():
+def main_menu(pantalla):
     run = True
     while run:
         pantalla.fill((74, 112, 139))
         player(playerX, playerY)
-        dibuja_texto_medio('Lets play TetriX', 60, (255, 255, 255), pantalla)
+        dibuja_texto_medio(pantalla, 'Lets play TetriX', 60, (255, 255, 255))
 
         pygame.display.update()
         for event in pygame.event.get():
@@ -386,12 +371,13 @@ def main_menu():
                 run = False
 
             if event.type == pygame.KEYDOWN:
-                main()
+                main(pantalla)
     pygame.quit()
 
 
 pantalla = pygame.display.set_mode((s_ancho, s_altura))
-playerImg = pygame.image.load('./git-test/ignored files/future.png')
+playerImg = pygame.image.load('future.png')
+pygame.display.set_caption('TetriX')
 playerX = 370  # shows on the middle of screen
 playerY = 480  # shows on the middle of screen
 
@@ -400,5 +386,4 @@ def player(x, y):
     pantalla.blit(playerImg, (x, y))
 
 
-pygame.display.set_caption('Tetris')
-main_menu()  # start game
+main_menu(pantalla)  # start game
